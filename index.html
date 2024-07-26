@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Signing App</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .output {
+            margin: 10px 0;
+        }
+        .output p {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .output span {
+            word-break: break-all;
+            flex: 1;
+            margin-right: 10px;
+        }
+        .copy-button {
+            background-color: #28a745;
+        }
+        .copy-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="signDataButton">Sign Data</button>
+        <div id="result" class="output">
+            <p><strong>signedEK:</strong> <span id="signedEK"></span><button class="copy-button" id="copySignedEK" onclick="copyToClipboard('signedEK')" disabled>Copy</button></p>
+            <p><strong>signature:</strong> <span id="signature"></span><button class="copy-button" id="copySignature" onclick="copyToClipboard('signature')" disabled>Copy</button></p>
+        </div>
+    </div>
+
+    <script>
+        async function signData() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                    // Create a provider and signer
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+
+                    // Data to be signed
+                    const data = ethers.utils.randomBytes(32); // Replace with your actual data
+                    const signedEK = ethers.utils.hexlify(data);
+
+                    // Sign the data
+                    const signature = await signer.signMessage(data);
+
+                    console.log('signedEK:', signedEK);
+                    console.log('signature:', signature);
+
+                    // Display the values on the page
+                    document.getElementById('signedEK').textContent = signedEK;
+                    document.getElementById('signature').textContent = signature;
+
+                    // Enable copy buttons
+                    document.getElementById('copySignedEK').disabled = false;
+                    document.getElementById('copySignature').disabled = false;
+
+                    return { signedEK, signature };
+                } catch (error) {
+                    console.error('Error signing data:', error);
+                }
+            } else {
+                console.log('MetaMask is not installed!');
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert(`${elementId} copied to clipboard!`);
+        }
+
+        document.getElementById('signDataButton').addEventListener('click', async () => {
+            const { signedEK, signature } = await signData();
+            console.log('signedEK:', signedEK);
+            console.log('signature:', signature);
+        });
+    </script>
+</body>
+</html>
